@@ -1,0 +1,16 @@
+{
+  "records": [
+    {
+      "date": "2026-03-08",
+      "source": "web_search_initial",
+      "kb_seller_pct": 62.5,
+      "kb_buyer_pct": 8.2,
+      "kb_sale_outlook": 104.0,
+      "kb_rent_outlook": 115.5,
+      "reb_national_sale_change": 0.04,
+      "reb_gyeongnam_sale_change": 0.05,
+      "note": "2026년 2월 KB리뷰 + 3월1주 부동산원 데이터",
+      "recorded_at": "2026-03-08T11:12:32.378839"
+    }
+  ]
+}

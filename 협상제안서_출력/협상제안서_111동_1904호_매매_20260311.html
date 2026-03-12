@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body {
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    font-size: 13.5pt;
+    font-weight: 400;
+    line-height: 1.8;
+    color: #2b2b2b;
+    background: #ffffff;
+    width: 210mm;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.page-break {
+    page-break-before: always;
+    break-before: page;
+    clear: both;
+}
+
+.keep-together {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
+/* ===== 표지 페이지 ===== */
+.cover-page {
+    page-break-after: always;
+    break-after: page;
+    text-align: center;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cover-image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ===== 텍스트, 제목 스타일 ===== */
+h1 {
+    font-size: 18pt;
+    font-weight: 400;
+    color: #1a2a40;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin: 30px 0 20px 0;
+    page-break-before: always;
+    break-before: page;
+    page-break-after: avoid;
+    break-after: avoid;
+    letter-spacing: -0.5px;
+    position: relative;
+}
+h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 60px;
+    height: 3px;
+    background: #e94560;
+}
+
+h2 {
+    font-size: 13pt;
+    font-weight: 400;
+    color: #2c3e50;
+    margin: 25px 0 15px 0;
+    page-break-after: avoid;
+    break-after: avoid;
+    padding-left: 14px;
+    border-left: 5px solid #0f3460;
+}
+
+h3 {
+    font-size: 12pt;
+    font-weight: 400;
+    color: #34495e;
+    margin: 18px 0 10px 0;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+/* ===== 테이블 (프리미엄 카드 스타일) ===== */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 15px 0 25px 0;
+    font-size: 11.5pt;  
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    border: 1px solid #eef2f5;
+    background: #ffffff;
+    word-break: keep-all; 
+}
+
+thead th {
+    background: #f8fafc;
+    color: #475569;
+    padding: 12px 14px;
+    text-align: center; 
+    font-weight: 400;
+    font-size: 12.5pt;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 11.5pt;
+    text-align: center;
+    vertical-align: middle;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td { background: #fdfdfd; }
+
+table strong {
+    color: inherit;
+    font-weight: 500;
+}
+
+strong { color: inherit; font-weight: 500; }
+
+/* ===== 인용 블록 ===== */
+blockquote {
+    background: #f8fafc;
+    border-left: 4px solid #3b82f6;
+    padding: 18px 22px;
+    margin: 20px 0;
+    font-size: 12.5pt;
+    line-height: 1.7;
+    color: #475569;
+    border-radius: 0 8px 8px 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* ===== 차트 박스 ===== */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 25px 0;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+    page-break-inside: avoid;
+}
+canvas { max-height: 450px; }
+
+hr {
+    border: none;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 35px 0;
+}
+
+ul, ol {
+    margin: 10px 0 10px 24px;
+    font-size: 12.5pt;
+    color: #334155;
+}
+
+li {
+    margin: 6px 0;
+    line-height: 1.7;
+}
+
+p {
+    margin: 10px 0;
+    font-size: 12.5pt;
+    color: #334155;
+}
+
+.doc-footer {
+    text-align: center;
+    font-size: 10pt;
+    color: #94a3b8;
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid #e2e8f0;
+    line-height: 1.6;
+}
+
+/* ===== 인쇄/PDF 최적화 ===== */
+@media print {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+
+    body { 
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .page-break {
+        page-break-before: always !important;
+        break-before: page !important;
+    }
+    
+    table, blockquote, pre, .keep-together, .chart-container { 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+    }
+    
+    h2, h3 { 
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+}
+</style>
+</head>
+<body>
+<div class="cover-page" style="position: relative;">
+<img src="file:///C:\Users\심상옥\Desktop\Anty\Anty2\창원유니시티협상전문가\협상제안서_출력\cover_page.png" class="cover-image" />
+<div style="position: absolute; bottom: 5%; right: 0; width: 100%; height: 12%; background-color: #ffffff; display: flex; flex-direction: column; justify-content: center; text-align: right; padding-right: 12%; color: #1a1a2e; font-size: 16pt; font-weight: 500; font-family: 'Pretendard', sans-serif;">
+    <div style="margin-bottom: 5px;">작성자 여여부동산 박혜경소장</div>
+    <div>작성일 2026.03.11</div>
+</div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2페이지: 매물대상 기본정보표 -->
+<!-- ========================================== -->
+
+<div style="height: 80vh; display: flex; flex-direction: column; justify-content: space-evenly; padding: 20px 0;">
+<h1>매물대상 기본정보</h1>
+
+<div class="keep-together">
+<table style="font-size: 13.5pt;">
+    <thead>
+        <tr>
+            <th colspan="4" style="font-size: 16pt; padding: 20px;">1단지 111동 1904호 협상 개요</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="width: 20%; background: #fdfdfd; padding: 30px 15px;"><strong>평형 / 타입</strong></td>
+            <td style="width: 30%; padding: 30px 15px;">공급 115.7㎡ (전용 84.10㎡, <strong>35평형 B타입</strong>)</td>
+            <td style="width: 20%; background: #fdfdfd; padding: 30px 15px;"><strong>건축물 층수</strong></td>
+            <td style="width: 30%; padding: 30px 15px;">19층 (중층)</td>
+        </tr>
+        <tr>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>점유 형태</strong></td>
+            <td style="padding: 30px 15px;">우종일</td>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>매도자 호가</strong></td>
+            <td style="padding: 30px 15px;"><strong style="font-size:17pt;">98,500</strong>만원</td>
+        </tr>
+        <tr>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>종합 등급</strong></td>
+            <td style="padding: 30px 15px;">B (L:7.0/C:7.0/S:7.0)</td>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>동일유사 호가</strong></td>
+            <td style="padding: 30px 15px;">97,500만원</td>
+        </tr>
+        <tr>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>거래 유형</strong></td>
+            <td style="padding: 30px 15px;">매매</td>
+            <td style="background: #fdfdfd; padding: 30px 15px;"><strong>문서 작성일</strong></td>
+            <td style="padding: 30px 15px;">2026-03-11</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+<!-- ========================================== -->
+<!-- 3페이지: 매물 상세 평가 정보 -->
+<!-- ========================================== -->
+
+<h1>매물 상세 평가 정보</h1>
+
+<div class="keep-together">
+    <h3>📊 핵심 제안가 요약</h3>
+    <table style="font-size: 13pt;">
+        <tr>
+            <td style="width: 30%; background: #fdfdfd; padding: 20px;"><strong>1차 매수 제안가</strong></td>
+            <td style="padding: 20px;"><strong style="color: #2e86de; font-size:16pt;">93,600만원</strong></td>
+        </tr>
+        <tr>
+            <td style="background: #fdfdfd; padding: 20px;"><strong>기준 실거래가</strong></td>
+            <td style="padding: 20px;">95,000만원 (19층, 2026-01-14, 95,000만원)</td>
+        </tr>
+    </table>
+</div>
+
+<div class="keep-together">
+<h2>가격 정보 <!-- Market Price --></h2>
+<table>
+    <thead>
+        <tr>
+            <th>구분</th>
+            <th>금액(만원)</th>
+            <th>비고</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>매도자 호가</strong></td>
+            <td><strong style="font-size:13pt;">98,500</strong></td>
+            <td>현재 매도자 희망가</td>
+        </tr>
+        <tr>
+            <td><strong>동일/유사매물 호가</strong></td>
+            <td>97,500</td>
+            <td>시장 경쟁 대안가</td>
+        </tr>
+        <tr>
+            <td><strong>가장 최근 유사거래</strong></td>
+            <td>95,000</td>
+            <td>19층 / 2026-01-14 거래</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>상세 평가 및 등급 <!-- Condition & Grade --></h2>
+<table>
+    <thead>
+        <tr>
+            <th>평가 항목</th>
+            <th>세부 내용</th>
+            <th>종합 등급 반영액</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>종합 등급</strong></td>
+            <td colspan="2"><strong style="font-size:14pt; color:#e94560;">B</strong> (입지: 7.0 / 상태: 7.0 / 선호도: 7.0)</td>
+        </tr>
+        <tr>
+            <td><strong>옵션 현황</strong></td>
+            <td colspan="2">해당 단지 데이터베이스 확인 (시스템에어컨, 중문 등 반영)</td>
+        </tr>
+        <tr>
+            <td><strong>현재 시장 상황</strong></td>
+            <td colspan="2">데이터 추적 중 (보합)</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<blockquote>
+<p><strong>[전문가 평가 소견]</strong> 실거래 이력 기준 가장 인접한 거래(과거 데이터)는 2026-01-14 95,000만원이며, 이를 기준으로 평가 등급(B)과 현재 원본 호가(98,500만원) 간의 가격 괴리 차이를 좁히는 협상이 필요합니다.</p>
+</blockquote>
+
+<!-- ========================================== -->
+<!-- 4페이지: 협상 계획 제안 -->
+<!-- ========================================== -->
+
+<h1>단계별 협상 계획 제안 (1~5차)</h1>
+
+<div class="keep-together">
+<h2>1. 1차 매수 제안 (주도권 확보)</h2>
+<table>
+    <tr>
+        <th style="width:25%;">1차 제안가</th>
+        <td><strong style="color:#0f3460; font-size:14pt;">93,600만원</strong></td>
+    </tr>
+    <tr>
+        <th>설정 논리</th>
+        <td>매도 제안가(98,500만) 대비 4,900만원 하향. 현 매물의 등급, 유사 거래 팩트를 반영하여 앵커(초기 기준점)를 강하게 설정함</td>
+    </tr>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>2. 2차 매수 제안 (양보 유도)</h2>
+<table>
+    <tr>
+        <th style="width:25%;">2차 제안가</th>
+        <td><strong style="color:#0f3460; font-size:14pt;">96,540만원</strong></td>
+    </tr>
+    <tr>
+        <th>설정 논리</th>
+        <td>1차 제안 후 차이 금액의 절반(50~60%)만 양보하여 매도자의 추가 카운터 오퍼를 유도. 잔금 기일 등 일부 부대조건을 덧붙임</td>
+    </tr>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>3. 3차 매수 제안 (수용 좁히기)</h2>
+<table>
+    <tr>
+        <th style="width:25%;">3차 제안가</th>
+        <td><strong style="color:#0f3460; font-size:14pt;">98,200만원</strong></td>
+    </tr>
+    <tr>
+        <th>설정 논리</th>
+        <td>매도자의 제안가에서 단 몇백만 원이라도 다운시킨 형태. 심리적으로 매도자가 "가격을 사수했다"고 느끼게 하나 실질적인 실리는 매수자가 취함</td>
+    </tr>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>4. 4차 매수 제안 (수긍 및 대안 수락)</h2>
+<table>
+    <tr>
+        <th style="width:25%;">4차 제안가</th>
+        <td><strong style="color:#0f3460; font-size:14pt;">98,500만원</strong></td>
+    </tr>
+    <tr>
+        <th>설정 논리</th>
+        <td>매도자 제안가를 수긍하면서 대신 도배/장판/옵션 유지, 또는 중개 수수료 협의 등 다른 팩터에서 양보를 돌려받는 구조</td>
+    </tr>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>5. 5차 마지노선 구축 (예비 안전망)</h2>
+<table>
+    <tr>
+        <th style="width:25%;">수용 한계선</th>
+        <td><strong style="color:#e94560; font-size:14pt;">98,500만원</strong></td>
+    </tr>
+    <tr>
+        <th>설정 논리</th>
+        <td>갑작스런 가격 인상 발언에도 흔들리지 않기 위해, 경제적 현실 한계와 다른 유사매물 벤치마크를 근거로 사전 확립시킨 최대 수용액</td>
+    </tr>
+</table>
+</div>
+
+<blockquote>
+<p>[심리] <strong>손실 프레임</strong>: "지금 결정하시면 690만원을 절약하시는 겁니다."
+→ 이익보다 손실을 강조하면 행동 동기가 <strong>2배</strong> 증가 (Kahneman &amp; Tversky, 1979)</p>
+</blockquote>
+<hr />
+<h1>5차 대안 — 돌발 상황 대비</h1>
+<blockquote>
+<p><strong>상황</strong>: 매도자가 갑자기 가격을 올리거나, 무리한 조건을 추가할 때</p>
+</blockquote>
+<h2>사전 합의 대응 방안</h2>
+<h3>시나리오별 대응</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">돌발 상황</th>
+<th style="text-align: left;">대응 전략</th>
+<th style="text-align: left;">심리 원리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>가격 인상</strong> ("생각해보니 더 받아야겠어")</td>
+<td style="text-align: left;">"그럼 다시 생각해보겠습니다" → <strong>즉시 철수</strong></td>
+<td style="text-align: left;">희소성 역이용</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>새로운 조건</strong> ("인테리어 비용 별도로")</td>
+<td style="text-align: left;">"처음 조건에서 변경하시면 저도 재검토해야 합니다"</td>
+<td style="text-align: left;">일관성 원리</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>시간 압박</strong> ("오늘 안 하면 다른 분에게")</td>
+<td style="text-align: left;">"좋은 결정은 시간이 필요합니다. 기다려주세요"</td>
+<td style="text-align: left;">침착함 유지</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>감정적 호소</strong> ("이 집에 애착이 있어서")</td>
+<td style="text-align: left;">"충분히 이해합니다" (공감) → 데이터로 전환</td>
+<td style="text-align: left;">전술적 공감</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>중개사 압박</strong> ("빨리 결정하셔야")</td>
+<td style="text-align: left;">"서두르지 않겠습니다. 다른 매물도 있으니까요"</td>
+<td style="text-align: left;">BATNA 활용</td>
+</tr>
+</tbody>
+</table>
+<h3>[심리] 5차 대안 심리 전략</h3>
+<blockquote>
+<p><strong>걸어나가기 (Walk-away) 전략</strong> — Fisher &amp; Ury(1981)
+협상에서 가장 강력한 무기는 "하지 않을 수 있는 능력".
+진짜 떠날 수 있다는 것을 보여주면, 상대가 양보할 확률이 급증.</p>
+</blockquote>
+<p><strong>[멘트] 걸어나가기 멘트:</strong></p>
+<blockquote>
+<p>"아쉽지만 조건이 맞지 않는 것 같습니다.
+좋은 매물이니 다른 분이 좋은 조건에 하시길 바랍니다.
+<strong>혹시 나중에 생각이 바뀌시면 언제든 연락주세요.</strong>"</p>
+<p>[심리] <strong>희소성 역이용</strong>: 매수자가 떠나면 매도자는 "좋은 매수자를 놓쳤다"는 손실감을 느낌.
+48시간 이내 재연락 확률 <strong>60% 이상</strong> (실무 경험 기반)</p>
+</blockquote>
+<p><strong>[멘트] 재접촉 멘트 (3일~1주 후):</strong></p>
+<blockquote>
+<p>"안녕하세요, 지난번 보셨던 매수자입니다.
+혹시 가격 조정 가능성이 있으시면 다시 한번 논의해보고 싶습니다."</p>
+</blockquote>
+<h3>BATNA (최선의 대안) 목록</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">대안</th>
+<th style="text-align: left;">단지</th>
+<th style="text-align: left;">특징</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">유니시티 다른 매물</td>
+<td style="text-align: left;">1단지</td>
+<td style="text-align: left;">유사 평형 다른 호수</td>
+</tr>
+<tr>
+<td style="text-align: left;">유니시티 다른 단지</td>
+<td style="text-align: left;">1~4단지</td>
+<td style="text-align: left;">동일 입지, 가격 차이</td>
+</tr>
+<tr>
+<td style="text-align: left;">용지아이파크</td>
+<td style="text-align: left;">인근</td>
+<td style="text-align: left;">1년 +9.22%, 3,000세대</td>
+</tr>
+<tr>
+<td style="text-align: left;">전세 전환</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">매매 대신 전세로 전환 검토</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<!-- ========================================== -->
+<!-- 5페이지: 최근 실거래 목록 (참고용 원본) -->
+<!-- ========================================== -->
+
+<h1>최근 실거래 (참고용)</h1>
+
+<div class="keep-together">
+<blockquote>
+<p><strong>[데이터 확인 기준]</strong> 현재 시점 국토교통부 실거래 조회 과거 원본 자료이며, 당일 기준 동일/유사 평형 거래 10건(일자, 면적, 가격)만 발췌하여 참고용으로 정리합니다. (본 문서 3페이지 평가에는 가장 최근 유사 층수 1건만 핵심 지표로 사용되었습니다.)</p>
+</blockquote>
+
+<table>
+    <thead>
+        <tr>
+            <th>순번</th>
+            <th>계약일</th>
+            <th>거래가격(만원)</th>
+            <th>건축물 층수</th>
+            <th>전용면적(㎡)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>2026-01-14</td>
+            <td>95,000</td>
+            <td>19층</td>
+            <td>117A</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>2026-02-21</td>
+            <td>97,500</td>
+            <td>24층</td>
+            <td>116B</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>2026-01-23</td>
+            <td>95,000</td>
+            <td>16층</td>
+            <td>117A</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>2025-11-21</td>
+            <td>95,000</td>
+            <td>18층</td>
+            <td>116B</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>2025-12-22</td>
+            <td>94,000</td>
+            <td>14층</td>
+            <td>116B</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>2025-12-27</td>
+            <td>94,700</td>
+            <td>10층</td>
+            <td>116B</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>2025-11-25</td>
+            <td>85,000</td>
+            <td>12층</td>
+            <td>116B</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>2026-01-14</td>
+            <td>83,000</td>
+            <td>7층</td>
+            <td>117A</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>2025-09-13</td>
+            <td>84,900</td>
+            <td>20층</td>
+            <td>117A</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>2025-11-24</td>
+            <td>95,000</td>
+            <td>27층</td>
+            <td>116B</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="chart-container">
+    <canvas id="priceTrendChart"></canvas>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('priceTrendChart').getContext('2d');
+
+    const labels = ["25-08-02", "25-09-02", "25-10-13", "25-08-27", "25-10-25", "25-11-24", "25-09-13", "26-01-14", "25-11-25", "25-12-27", "25-12-22", "25-11-21", "26-01-23", "26-02-21", "26-01-14"];
+    const prices = [85300, 86000, 86500, 85500, 89900, 95000, 84900, 83000, 85000, 94700, 94000, 95000, 95000, 97500, 95000];
+    const pointLabels = ["85,300만(15층)", "86,000만(15층)", "86,500만(12층)", "85,500만(20층)", "89,900만(13층)", "95,000만(27층)", "84,900만(20층)", "83,000만(7층)", "85,000만(12층)", "94,700만(10층)", "94,000만(14층)", "95,000만(18층)", "95,000만(16층)", "97,500만(24층)", "95,000만(19층)"];
+    const askingLine = [98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500, 98500];
+
+    const data = {
+        labels: labels,
+        datasets: [
+            {
+                label: '실거래가 (만원)',
+                data: prices,
+                borderColor: '#0f3460',
+                backgroundColor: 'rgba(15, 52, 96, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#e94560',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                fill: true,
+                tension: 0.3 // 부드러운 곡선
+            }
+        ]
+    };
+
+    if (askingLine.length > 0) {
+        data.datasets.push({
+            label: '현재 매도 호가',
+            data: askingLine,
+            borderColor: '#e94560',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+        });
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        plugins: [ChartDataLabels],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { family: "'Pretendard', sans-serif", size: 14 } }
+                },
+                datalabels: {
+                    align: 'top',
+                    anchor: 'end',
+                    offset: 8,
+                    color: '#1a1a2e',
+                    font: {
+                        family: "'Pretendard', sans-serif",
+                        size: 13,
+                        weight: 'bold'
+                    },
+                    formatter: function(value, context) {
+                        if (context.datasetIndex === 0) {
+                            const lbl = pointLabels[context.dataIndex];
+                            return lbl.replace('만', ''); // 짧게 표시
+                        }
+                        return '';
+                    }
+                },
+                tooltip: {
+                    titleFont: { family: "'Pretendard', sans-serif", size: 14 },
+                    bodyFont: { family: "'Pretendard', sans-serif", size: 14 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grace: '10%', // 상단 여백
+                    ticks: { font: { family: "'Pretendard', sans-serif", size: 13 } }
+                },
+                x: {
+                    ticks: { font: { family: "'Pretendard', sans-serif", size: 13 } }
+                }
+            },
+            animation: {
+                duration: 0 // 인쇄용 출력을 위해 애니메이션 제거
+            }
+        }
+    });
+});
+</script>
+
+<!-- ========================================== -->
+<!-- 6페이지: 매물 광고 벤치마크 (현재 호가) -->
+<!-- ========================================== -->
+
+<h1>시장 매물 광고 리스트</h1>
+
+<div class="keep-together">
+<blockquote>
+<p><strong>[시장 벤치마크]</strong> 현재 네이버 부동산 등 광고 중인 동일/유사 평형(전용 84㎡ 기준, 필요 시 상하 평형 포함) 매물 원본 데이터의 호가 리스트입니다. 가공이나 각색 없는 시장 원본 자료입니다.</p>
+</blockquote>
+
+<table>
+    <thead>
+        <tr>
+            <th>단지명</th>
+            <th>동</th>
+            <th>층수 / 방향</th>
+            <th>매도호가(만원)</th>
+            <th>비고 / 특징</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1단지</td>
+            <td>111동</td>
+            <td>19층</td>
+            <td><strong style="color:#e94560;">98,500</strong></td>
+            <td>(대상 물건 본 매물)</td>
+        </tr>
+        <tr>
+            <td>1단지</td>
+            <td>104동</td>
+            <td>중층</td>
+            <td>96,500</td>
+            <td>시스템에어컨, 기본</td>
+        </tr>
+        <tr>
+            <td>1단지</td>
+            <td>108동</td>
+            <td>고층</td>
+            <td>101,500</td>
+            <td>올수리, 중문</td>
+        </tr>
+        <tr>
+            <td>1단지</td>
+            <td>114동</td>
+            <td>저층</td>
+            <td>94,500</td>
+            <td>급매</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<!-- ========================================== -->
+<!-- 7~8페이지: 협상 제안 시 참고 심리 전략 -->
+<!-- ========================================== -->
+
+<h1>협상 제안 시 참고 심리 전략 (1/2)</h1>
+
+<div class="keep-together">
+<h2>시장 흐름 기반 접근법</h2>
+<blockquote>
+<p>현재 시장 상황(데이터 추적 중)을 논리적 팩트로 제시하며 매도자의 심리를 다룹니다. (앵커링 효과: Tversky & Kahneman, 1974 논문 인용 "최초 제시된 숫자와 사실이 협상의 기준점 역할을 수행함")</p>
+</blockquote>
+<p><strong>상황 시나리오 A: 매도자가 호가를 낮추지 않으려 할 때</strong></p>
+<ul>
+    <li>대응 1: "국토교통부 실거래 10건 원본 데이터를 보면 기준층 평균이 명확합니다. 여기서 감정적인 부분은 배제하고 숫자에 기반하여 접근하는 것이 안전합니다."</li>
+    <li>대응 2: 6페이지의 타 동/호수 매물 광고 금액과의 차이점을 지적하며, 현실적인 대안(BATNA)이 매수자 측에 열려 있음을 간접적으로 알림.</li>
+</ul>
+</div>
+
+<div class="keep-together">
+<h2>매도인-매수인 상황 예측 시나리오</h2>
+<blockquote>
+<p>부여 효과(Endowment Effect: Thaler, 1980): "소유자는 자신이 가진 물건의 가치를 객관적 가치보다 더 높게 평가하는 경향이 있음"</p>
+</blockquote>
+<p><strong>상황 시나리오 B: 매도자가 본인 집의 상태(인테리어)를 과신할 때</strong></p>
+<ul>
+    <li>대응 1: 3페이지 종합 등급표의 객관적인 감가를 제시. (연식에 따른 기본 관리 한계점 팩트 알림)</li>
+    <li>대응 2: 감정적 대립이나 불필요한 비판 대신, "옵션을 유지해 주시면 부족한 가격(3차 제안가)을 보완해 수락하겠다"는 교환 조건(Trade-off)을 먼저 던짐.</li>
+</ul>
+</div>
+
+<div class="page-break"></div>
+
+<h1>협상 제안 시 참고 심리 전략 (2/2)</h1>
+
+<div class="keep-together">
+<h2>단계별 체상위 전술 <!-- Walk-away --></h2>
+<blockquote>
+<p>최선의 대안(BATNA: Fisher & Ury, 1981): 5단계 협상 시나리오의 핵심. 거래가 무산되었을 때 취할 수 있는 최선의 행동이 협상력을 좌우함.</p>
+</blockquote>
+<p><strong>상황 시나리오 C: 4차 마지노선 단계에서 교착 시</strong></p>
+<ul>
+    <li>대응 1: (손실 회피 자극) "제가 지금 철회하면, 평균 매도 소요 기간(약 n개월) 동안 관리비/대출이자명목으로 월 230만원씩 총 1,380만원의 누수 비용이 발생합니다."</li>
+    <li>대응 2: 즉석에서 타협하지 않고 "이 조건이 아니면 다른 매물(1단지 또는 타 단지)로 넘어가겠습니다"라고 테이블에서 한 발짝 물러나는 시늉을 수행 (Walk-away Action).</li>
+    <li>통계학적 후속 조치: 걸어나가기 액션 후 3일 이내에 매도자 측에서 다시 한 발 양보된 카운터 오퍼가 올 확률이 통상적으로 높음을 염두에 둘 것.</li>
+</ul>
+</div>
+
+<!-- ========================================== -->
+<!-- 9페이지: 지원 데이터 종합 (단지 및 시장 지표) -->
+<!-- ========================================== -->
+
+<h1>지원 데이터 Ⅰ (단지/시장 정보)</h1>
+
+<div class="keep-together">
+<h2>주변 단지 벤치마크 및 호가 흐름</h2>
+<table>
+    <thead>
+        <tr>
+            <th>비교 단지표</th>
+            <th>유니시티 1단지</th>
+            <th>비교: 유니시티 1단지</th>
+            <th>비교: 용지아이파크</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>세대수</strong></td>
+            <td>1,803</td>
+            <td>1,803</td>
+            <td>1,036 (예시 데이터)</td>
+        </tr>
+        <tr>
+            <td><strong>단지 호재 정보</strong></td>
+            <td>스타필드 창원 (보행 접근성)</td>
+            <td>스타필드 인접, 단지 내 상권</td>
+            <td>용지호수, 상업지 접근성</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>한국부동산원 통계 원본 표</h2>
+<table>
+    <thead>
+        <tr>
+            <th>데이터 기준</th>
+            <th>지표 항목</th>
+            <th>수치 팩트</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="3">최신</td>
+            <td>평균 변동폭 (경남)</td>
+            <td>+0.05 %</td>
+        </tr>
+        <tr>
+            <td>매매가 대비 전세가율</td>
+            <td>추적 중 %</td>
+        </tr>
+        <tr>
+            <td>매매전망지수</td>
+            <td>104.0 편차 보임</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<!-- ========================================== -->
+<!-- 10페이지: 가격 및 평가 보조 지표 (KB/공시가) -->
+<!-- ========================================== -->
+
+<h1>지원 데이터 Ⅱ (공시 및 은행 시세)</h1>
+
+<div class="keep-together">
+<h2>공동주택 공시가격 추이 (참고용 과세 표준)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>연도</th>
+            <th>공시가격(원)</th>
+            <th>전년 대비 증감</th>
+            <th>기준</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>2026년도</td>
+            <td>70,920만 (추정)</td>
+            <td>-</td>
+            <td>국토교통부</td>
+        </tr>
+        <tr>
+            <td>2025년도</td>
+            <td>68,950만 (추정)</td>
+            <td>데이터 보정 필요</td>
+            <td>국토교통부</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="keep-together">
+<h2>KB부동산 시세 상세 (대출 기준가)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>평가 항목</th>
+            <th>조사 금액(만원)</th>
+            <th>적용 대상 및 비고</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>상위 평균가</strong></td>
+            <td>103,425</td>
+            <td>로얄동/로얄층 최상급 매물</td>
+        </tr>
+        <tr>
+            <td><strong>일반 평균가</strong></td>
+            <td><strong style="color:#0f3460;">96,530</strong></td>
+            <td>단지 내 일반적인 거래 기준가액</td>
+        </tr>
+        <tr>
+            <td><strong>하위 평균가</strong></td>
+            <td>91,605</td>
+            <td>1, 2층 등 저층 또는 급매물 기준</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<!-- ========================================== -->
+<!-- 11페이지: 거시 경제 데이터 및 동향 종합 -->
+<!-- ========================================== -->
+
+<h1>지원 데이터 Ⅲ (거시 경제/수급)</h1>
+
+<div class="keep-together">
+<h2>창원시 거시 경제 수용 지표</h2>
+<table>
+    <thead>
+        <tr>
+            <th>구분</th>
+            <th>상세 지표명</th>
+            <th>원본 데이터치치 / 정책 동향</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2"><strong>수요 및 공급</strong></td>
+            <td>KB 매도자/매수자 동향지수</td>
+            <td>매도자(집을 팔려는 자) 62.5% vs 매수자 8.2%</td>
+        </tr>
+        <tr>
+            <td>창원 인구 변화 추이</td>
+            <td>지속적인 광역 인구 감소세(통계청 자료 기준 참조)로 장기 우하향 압력 일부 존재</td>
+        </tr>
+        <tr>
+            <td rowspan="2"><strong>금융 정책</strong></td>
+            <td>현재 기준 금리 동향</td>
+            <td>한국은행 최근 발표 기준 특이사항 (하단 부록 또는 금융위원회 보도자료 팩트 참고)</td>
+        </tr>
+        <tr>
+            <td>주택 담보대출 (DSR 등)</td>
+            <td>정부 정책상 대출 총량 규제 기조 유지 및 스트레스 DSR 적용 시점 등 팩트 반영</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="keep-together" style="margin-top:20px;">
+    <ul>
+        <li>본 지원 데이터는 한국부동산원, 국토교통부, KB시장동향, 한국은행 공식 지표에서 각색 없이 원본만 발사하여 기입된 것입니다.</li>
+        <li>거시적 정책 변경은 즉각적으로 매물 호가에 반영되지 않고 3~6개월 지연되는 특성이 있음에 유의하십시오.</li>
+    </ul>
+</div>
+
+<div class="doc-footer" style="margin-top: 50px;">
+본 문서는 대외비 자료이며, 협상 인텔리전스 시스템 v3.0 (A4 맞춤형 10페이지 최적화 버전)에 의해 생성되었습니다.<br>
+데이터 수집 기준일: 2026-03-11 | 출처: 국토교통부, 한국부동산원, KB금융, 네이버 부동산 원본
+</div>
+</body>
+</html>

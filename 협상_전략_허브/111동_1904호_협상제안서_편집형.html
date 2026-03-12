@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>111동 1904호 매수 협상제안서 - 유니시티 전문가</title>
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #303f9f;
+            --accent-color: #ffd700;
+            --text-color: #333;
+            --border-color: #ddd;
+            --bg-light: #f4f6f9;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        .confidential-tag {
+            display: inline-block;
+            background: #ff5252;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-left: 5px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 20px;
+            background: #f0f2f5;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #fafafa;
+            width: 30%;
+            font-weight: 600;
+        }
+
+        .editable-area {
+            width: 100%;
+            min-height: 100px;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .editable-area:focus {
+            border-color: var(--secondary-color);
+            background-color: #fffde7;
+        }
+
+        .proposal-box {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .proposal-box.aggressive {
+            border-top: 5px solid #4caf50;
+        }
+
+        .proposal-box.balanced {
+            border-top: 5px solid #2196f3;
+        }
+
+        .proposal-box.accommodative {
+            border-top: 5px solid #f44336;
+        }
+
+        .proposal-label {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .print-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                width: 100%;
+                max-width: none;
+                padding: 0;
+            }
+
+            .print-btn {
+                display: none;
+            }
+
+            .editable-area {
+                border: none;
+                padding: 0;
+            }
+
+            input,
+            textarea {
+                border: none;
+                padding: 0;
+                width: auto;
+                font-size: 16px;
+            }
+
+            .proposal-box {
+                break-inside: avoid;
+            }
+
+            .section {
+                break-inside: avoid;
+            }
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>[창원 유니시티] 매수 협상제안서</h1>
+            <div class="confidential-tag">매수인 브리핑용 / 매도인 비공개</div>
+        </header>
+
+        <div class="section">
+            <div class="section-title">1. 대상 물건 기본 정보</div>
+            <table>
+                <tr>
+                    <th>대상 물건</th>
+                    <td><input type="text" id="unit-info" value="1단지 111동 1904호" style="font-weight:bold;">
+                    </td>
+                </tr>
+                <tr>
+                    <th>평형 / 타입</th>
+                    <td><input type="text" id="area-type" value="56평형 / B타입"></td>
+                </tr>
+                <tr>
+                    <th>세대 등급</th>
+                    <td><input type="text" id="unit-grade" value="B등급 (로열층, 남향)"></td>
+                </tr>
+                <tr>
+                    <th>매도 희망가(호가)</th>
+                    <td><input type="text" id="asking-price" placeholder="실제 호가를 입력하세요 (예: 15.5억)"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">2. 단계별 전략 제안</div>
+
+            <div class="proposal-box aggressive">
+                <span class="proposal-label">🟢 제안 1: 공격적 실리 중심안 (Aggressive)</span>
+                <div class="input-group">
+                    <label>제시 가격:</label>
+                    <input type="text" id="prop-1-price" value="14억 2,000만 원">
+                </div>
+                <label>논리적 근거 (Justification):</label>
+                <div class="editable-area" id="prop-1-logic" contenteditable="true">
+                    1. <strong>Safety Margin</strong>: 분양가 대비 충분한 상승분을 인정하되, 2026년 과세 전 조기 잔금 조건을 통한 세금 리스크 절감 강조.<br>
+                    2. <strong>Cash Power</strong>: 매수인의 현금 동원력을 시연하여 DSR 규제 등 계약 파기 리스크가 전혀 없는 '클린 자금'임을 어필.<br>
+                    3. 오늘 결단 시 즉시 계약금 입금 및 자금 증빙 공유 조건.
+                </div>
+            </div>
+
+            <div class="proposal-box balanced">
+                <span class="proposal-label">🟡 제안 2: 시장 균형 안정안 (Balanced)</span>
+                <div class="input-group">
+                    <label>제시 가격:</label>
+                    <input type="text" id="prop-2-price" value="15억 1,000만 원">
+                </div>
+                <label>논리적 근거 (Justification):</label>
+                <div class="editable-area" id="prop-2-logic" contenteditable="true">
+                    1. <strong>Endowment Effect 제어</strong>: 매도인의 심리를 인정하되, 월 34만 원의 유지비용과 기회비용 데이터를 제시하여 보유 자산의 정체 위험
+                    경고.<br>
+                    2. <strong>Time Decay</strong>: 스타필드 착공 등 호재가 선반영된 현재가 매도의 적기임을 데이터로 증명.<br>
+                    3. 중도금 선지급 또는 잔금 일정 조율을 통한 매도인 편의 극대화.
+                </div>
+            </div>
+
+            <div class="proposal-box accommodative">
+                <span class="proposal-label">🔴 제안 3: 조건부 수용안 (Accommodative)</span>
+                <div class="input-group">
+                    <label>제시 가격:</label>
+                    <input type="text" id="prop-3-price" value="매도인 요구가 수용 (최고가 전략)">
+                </div>
+                <label>우리의 요구 조건 (Counter-Demands):</label>
+                <div class="editable-area" id="prop-3-logic" contenteditable="true">
+                    1. <strong>Perfect Condition</strong>: 최고가를 수용하는 만큼 내부 인테리어 잔존 시설물 일체 승계 및 미세 하자(누수/결로) 원상복구 책임
+                    명문화.<br>
+                    2. <strong>Professional Audit</strong>: 잔금 전 전문가 사후 점검 완료 및 특약 명시.<br>
+                    3. 실거주 플랜에 맞춘 잔금 일정의 최대 유연성 확보.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">3. 변수 대비 시나리오</div>
+            <div class="editable-area" id="contingency-scenarios" contenteditable="true" style="min-height: 150px;">
+                <strong>🛡️ 경쟁자 출현 시:</strong> 금액 경쟁보다는 '자금 실행의 확실성(무사고 거래 기록)'으로 매도인의 신뢰를 확보합니다.<br><br>
+                <strong>🛡️ 매도인 변심 시:</strong> 오늘을 놓칠 경우 연간 약 409만 원의 유지비용과 내년 공시가격 인상에 따른 세 부담 리스크를 재부각합니다.<br><br>
+                <strong>🛡️ 지역 호재 시:</strong> 스타필드 및 사화공원 호재는 이미 시세에 반영되어 있으며, 대출 금리 변동성을 고려할 때 현재가 고점일 수 있음을 시사합니다.
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">4. [소장님] 전문가 브리핑 및 최종 권고</div>
+            <div class="editable-area" id="expert-insight" contenteditable="true"
+                style="min-height: 150px; background-color: #fffde7;">
+                - <strong>매도인 성향 분석</strong>: 19층 고층 매물 보유에 따른 프라이드가 강하므로 인정(Praise) 전략 후 실리(Loss) 강조 전략 병행 권장.<br>
+                - <strong>현장 특이사항</strong>: 111동 라인 중 19층의 조망권 확보 상태 양호.<br>
+                - <strong>최종 전략 제언</strong>: 본 매물은 희소성이 있으므로 2단계 가격선에서 초기 계약금 선지급 카드로 조기 클로징하는 것이 최선임.
+            </div>
+        </div>
+
+        <footer>
+            <p>창원 유니시티 협상 전문가 그룹 | Antigravity AI Powered Strategy</p>
+        </footer>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">제안서 출력하기 (PDF 저장)</button>
+
+</body>
+
+</html>

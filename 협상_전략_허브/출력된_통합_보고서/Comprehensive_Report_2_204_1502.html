@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유니시티 지능형 통합 보고서 - 창원 전문가 그룹</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+        :root {
+            --primary: #1a237e;
+            --secondary: #303f9f;
+            --accent: #ffd700;
+            --success: #2e7d32;
+            --warning: #f57c00;
+            --danger: #d32f2f;
+            --bg-light: #f8f9fa;
+            --text-dark: #212121;
+            --text-muted: #616161;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .report-page {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 60px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Watermark-like Accent */
+        .report-page::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 32px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .header-title p {
+            margin: 5px 0 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .confidential-stamp {
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            padding: 5px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            transform: rotate(-5deg);
+            opacity: 0.8;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .section-number {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #fcfcfc;
+            width: 25%;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .highlight-value {
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        /* Strategy Cards */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* Content Areas */
+        .content-block {
+            background: #f9f9f9;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            font-size: 15px;
+        }
+
+        .editable-field {
+            outline: none;
+            border: 1px dashed transparent;
+            min-height: 20px;
+        }
+
+        .editable-field:hover {
+            border-color: #ccc;
+        }
+
+        .editable-field:focus {
+            border-color: var(--secondary);
+            background: #fffde7;
+        }
+
+        /* Print Button */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: var(--secondary);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .report-page {
+                margin: 0;
+                box-shadow: none;
+                padding: 40px;
+                width: 100%;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .report-page {
+                page-break-after: always;
+            }
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PAGE 1: EXECUTIVE SUMMARY & PROPOSAL -->
+    <div class="report-page">
+        <header>
+            <div class="header-title">
+                <h1>UNICITY INTELLIGENCE REPORT</h1>
+                <p>PURCHASE NEGOTIATION & VALUE ANALYSIS</p>
+            </div>
+            <div class="confidential-stamp">TOP SECRET / INTERNAL ONLY</div>
+        </header>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">01</div>
+                <div class="section-title">대상 물건 및 핵심 정보 (Object Summary)</div>
+            </div>
+            <table>
+                <tr>
+                    <th>대상 물건</th>
+                    <td colspan="3" class="highlight-value"><span class="editable-field" id="unit-id"
+                            contenteditable="true">U1-111-1904 (1단지 111동 1904호)</span></td>
+                </tr>
+                <tr>
+                    <th>평형 / 타입</th>
+                    <td><span class="editable-field" id="unit-type" contenteditable="true">35평평형 / A타입</span></td>
+                    <th>공급/전용 면적</th>
+                    <td><span class="editable-field" id="unit-area" contenteditable="true">N/A㎡</span></td>
+                </tr>
+                <tr>
+                    <th>세대 등급</th>
+                    <td><span class="editable-field" id="unit-grade" contenteditable="true">C Grade</span></td>
+                    <th>최종 취득원가</th>
+                    <td><span class="editable-field" id="unit-cost" contenteditable="true">N/A0,000 KRW</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">02</div>
+                <div class="section-title">단계별 매수 협상안 (Tiered Negotiation Strategy)</div>
+            </div>
+            <div class="grid-container">
+                <div class="card" style="border-top: 4px solid var(--success);">
+                    <h3>🟢 공격적 실리 중심안</h3>
+                    <div class="editable-field" id="prop-1" contenteditable="true">
+                        <strong>제시가: 14.2억 ~ 14.5억</strong><br>
+                        - 세금 리스크(6월 과세) 기반 압박<br>
+                        - 무사고 현금 동원력 시연
+                    </div>
+                </div>
+                <div class="card" style="border-top: 4px solid var(--secondary);">
+                    <h3>🟡 시장 균형 안정안</h3>
+                    <div class="editable-field" id="prop-2" contenteditable="true">
+                        <strong>제시가: 14.8억 ~ 15.2억</strong><br>
+                        - 유지비용 기회비용 데이터 제시<br>
+                        - 중도금 선지급 카드 활용
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">03</div>
+                <div class="section-title">현장 정성 분석 (Expert Site Observations)</div>
+            </div>
+            <div class="content-block">
+                <div class="editable-field" id="user-notes" contenteditable="true" style="min-height: 80px;">
+                    거실 확장형이며 누수 흔적 없이 관리 상태 최상임. 단지 내 조경 조망이 탁월함.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: STRATEGIC ASSETS & DATA ANNEX -->
+    <div class="report-page">
+        <header>
+            <div class="header-title">
+                <h1>STRATEGIC DATA ASSETS</h1>
+                <p>BIG DATA & PSYCHOLOGICAL PROFILING</p>
+            </div>
+        </header>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">04</div>
+                <div class="section-title">심리적 협상 트리거 (Psychological Triggers)</div>
+            </div>
+            <div class="grid-container">
+                <div class="card">
+                    <h3>유실 회피 (Loss Aversion)</h3>
+                    <div class="editable-field" id="data-psych-1" contenteditable="true">
+                        매도인이 매각을 미룰 때 발생하는 관리비/보유세 등 가시적 손실을 수치화하여 제시 (연간 ~409만 원).
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>보유 효과 (Endowment Effect)</h3>
+                    <div class="editable-field" id="data-psych-2" contenteditable="true">
+                        자신의 자산을 시장가보다 높게 평가하는 편향을 객관적 실거래 데이터 비교로 중화.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">05</div>
+                <div class="section-title">거시 호재 및 인프라 가치 (Macro Value)</div>
+            </div>
+            <div class="content-block" style="background: #fff; border: 1px solid var(--border);">
+                <ul class="editable-field" id="data-infra" contenteditable="true"
+                    style="margin: 0; padding-left: 20px;">
+                    <li><strong>창원 스타필드</strong>: 202X년 준공 예정, 지역 상권의 압도적 랜드마크화.</li>
+                    <li><strong>의창중학교</strong>: 2028년 개교 확정, 학군 수요의 안정적 유입 및 과밀 해소.</li>
+                    <li><strong>사화공원 민간공원조성</strong>: 대규모 녹지 인프라 및 숲세권 가치 상승.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">06</div>
+                <div class="section-title">보유 비용 분석 (Holding Cost Analysis)</div>
+            </div>
+            <table>
+                <tr>
+                    <th>항목</th>
+                    <th>월평균 (추정)</th>
+                    <th>연간 누적 (추정)</th>
+                </tr>
+                <tr>
+                    <td>일반 관리비 (56평 기준)</td>
+                    <td><span class="editable-field" id="cost-monthly" contenteditable="true">341,000 KRW</span></td>
+                    <td><span class="editable-field" id="cost-yearly" contenteditable="true">4,092,000 KRW</span></td>
+                </tr>
+                <tr>
+                    <td>재산세/보유세</td>
+                    <td colspan="2"><span class="editable-field" id="tax-info" contenteditable="true">공시가격 시뮬레이션 기반 별도
+                            산출 필요</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <footer>
+            <p>창원 유니시티 협상 전문가 그룹 | Antigravity AI Engine Powered</p>
+        </footer>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="window.print()">보고서 PDF 다운로드 / 인쇄</button>
+    </div>
+
+</body>
+
+</html>
