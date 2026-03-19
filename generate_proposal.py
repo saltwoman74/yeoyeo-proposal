@@ -864,24 +864,32 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
         </tr>
 """
     # ================================================================
-    # [오류 방지 시스템] 실제 네이버 부동산 광고 매물 (구글 시트 연동)
+    # [구조적 검증 시스템 v3.0] 실제 네이버 부동산 광고 매물
     # ================================================================
-    # 방지 대책:
-    #   1. 네트워크 타임아웃 + 재시도 (최대 3회)
-    #   2. 삭제/거래완료 키워드 필터링
-    #   3. 가격 범위 유효성 검증
-    #   4. 동일 매물 중복 제거 (동+가격 기준)
-    #   5. 데이터 품질 리포트 출력
+    # 4중 게이트 구조:
+    #   Gate 1: 단지명 엄격 매칭 (endswith - 오탐 원천 차단)
+    #   Gate 2: Ground Truth 동 번호 검증 (존재하지 않는 동 차단)
+    #   Gate 3: 가격/키워드 유효성 검증
+    #   Gate 4: 중복 제거 + 데이터 품질 리포트
     # ================================================================
+    from ground_truth import GROUND_TRUTH
+
     SHEET_URL = "https://docs.google.com/spreadsheets/d/18wOKWY40CbJECrvDuqit5hOKTqVWxyMCVRI1BJuWu2s/export?format=csv&gid=0"
     SUSPICIOUS_KEYWORDS = ['삭제', '거래완료', '계약완료', '광고중지', '거래종결', '해제']
     MAX_RETRY = 3
-    SHEET_TIMEOUT = 15  # seconds
+    SHEET_TIMEOUT = 15
+
+    # Ground Truth에서 해당 단지의 유효 동 번호 Set 생성
+    valid_dongs = set()
+    gt_data = GROUND_TRUTH.get(complex_name, {})
+    for d_key in gt_data:
+        valid_dongs.add(d_key.replace('동', ''))  # "301동" → "301"
 
     real_listings = []
     listing_stats = {
         "total_rows": 0,
         "matched_rows": 0,
+        "invalid_dong_filtered": 0,
         "price_failed": 0,
         "suspicious_filtered": 0,
         "duplicates_removed": 0,
@@ -892,33 +900,32 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
 
     try:
         import pandas as pd
-
-        # [방지 1] 네트워크 재시도 + 타임아웃
         import io, time
         try:
-            import requests
+            import requests as req_lib
             HAS_REQUESTS = True
         except ImportError:
             HAS_REQUESTS = False
 
+        # 네트워크 재시도 + 타임아웃
         df = None
         for attempt in range(1, MAX_RETRY + 1):
             try:
                 if HAS_REQUESTS:
-                    resp = requests.get(SHEET_URL, timeout=SHEET_TIMEOUT)
+                    resp = req_lib.get(SHEET_URL, timeout=SHEET_TIMEOUT)
                     resp.raise_for_status()
                     csv_text = resp.content.decode('utf-8')
                     df = pd.read_csv(io.StringIO(csv_text))
                 else:
                     df = pd.read_csv(SHEET_URL, encoding='utf-8')
-                break  # 성공 시 즉시 탈출
+                break
             except Exception as net_err:
                 listing_stats["network_retries"] += 1
                 if attempt < MAX_RETRY:
                     time.sleep(2)
                     continue
                 else:
-                    raise net_err  # 최종 실패 시 상위 except로
+                    raise net_err
 
         if df is None or df.empty:
             listing_stats["warnings"].append("구글 시트 데이터가 비어 있습니다.")
@@ -928,54 +935,72 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
 
             for idx, row in df.iterrows():
                 rc = str(row.get('단지명', ''))
-                rd = str(row.get('동', '')).replace('동', '')
+                rd = str(row.get('동', '')).replace('동', '').strip()
                 rt = str(row.get('거래종류', ''))
                 ra = str(row.get('평타입', '')).replace('평', '')
 
-                # 단지와 거래방식이 일치하고, 평형 숫자가 포함되어 있으면 채택
-                if complex_name.replace('단지','') in rc and trade_type in rt:
-                    if str(pyeong_name).replace('평','') in str(row.get('공급', '')) or str(pyeong_name).replace('평','') in ra:
-                        listing_stats["matched_rows"] += 1
+                # ========== Gate 1: 단지명 엄격 매칭 ==========
+                # endswith로 정확한 단지만 매칭 (예: "3단지"로 끝나는 것만)
+                if not rc.endswith(complex_name):
+                    continue
+                if trade_type not in rt:
+                    continue
 
-                        # [방지 2] 삭제/거래완료 키워드 필터링
-                        note_text = str(row.get('매물특징', ''))
-                        all_text = f"{note_text} {str(row.get('거래종류', ''))} {str(row.get('단지명', ''))}"
-                        is_suspicious = False
-                        for kw in SUSPICIOUS_KEYWORDS:
-                            if kw in all_text:
-                                listing_stats["suspicious_filtered"] += 1
-                                is_suspicious = True
-                                break
-                        if is_suspicious:
-                            continue
+                # 평형 필터
+                pyeong_key = str(pyeong_name).replace('평', '')
+                supply_str = str(row.get('공급', ''))
+                if pyeong_key not in supply_str and pyeong_key not in ra:
+                    continue
 
-                        # [방지 3] 가격 유효성 검증
-                        price_val = parse_sheet_price(row.get('가격', ''))
-                        if price_val <= 0:
-                            listing_stats["price_failed"] += 1
-                            continue
-                        # 비정상 가격 범위 체크 (1억 미만 or 50억 초과는 의심)
-                        if price_val < 10000 or price_val > 500000:
-                            listing_stats["price_failed"] += 1
-                            listing_stats["warnings"].append(f"비정상 가격 필터링: {rd}동 {price_val}만원")
-                            continue
+                listing_stats["matched_rows"] += 1
 
-                        floor_raw = str(row.get('층', ''))
-                        direction = str(row.get('방향', '')).strip()
-                        floor_display = parse_floor_display(floor_raw)
-                        if direction and direction not in ('-', '', 'nan'):
-                            floor_direction = f"{floor_display} / {direction}"
-                        else:
-                            floor_direction = floor_display
+                # ========== Gate 2: Ground Truth 동 번호 검증 ==========
+                if valid_dongs and rd not in valid_dongs:
+                    listing_stats["invalid_dong_filtered"] += 1
+                    listing_stats["warnings"].append(
+                        f"허구 동 차단: {rd}동 (유효: {sorted(valid_dongs)}에 없음)"
+                    )
+                    continue
 
-                        real_listings.append({
-                            "dong": rd,
-                            "floor_direction": floor_direction,
-                            "price": price_val,
-                            "note": note_text[:40]
-                        })
+                # ========== Gate 3-A: 삭제/거래완료 키워드 필터링 ==========
+                note_text = str(row.get('매물특징', ''))
+                all_text = f"{note_text} {rt} {rc}"
+                is_suspicious = False
+                for kw in SUSPICIOUS_KEYWORDS:
+                    if kw in all_text:
+                        listing_stats["suspicious_filtered"] += 1
+                        is_suspicious = True
+                        break
+                if is_suspicious:
+                    continue
 
-            # [방지 4] 동일 동+가격 기준 중복 제거 (첫 번째만 유지)
+                # ========== Gate 3-B: 가격 유효성 검증 ==========
+                price_val = parse_sheet_price(row.get('가격', ''))
+                if price_val <= 0:
+                    listing_stats["price_failed"] += 1
+                    continue
+                if price_val < 10000 or price_val > 500000:
+                    listing_stats["price_failed"] += 1
+                    listing_stats["warnings"].append(f"비정상 가격: {rd}동 {price_val}만원")
+                    continue
+
+                # ========== 데이터 구성 ==========
+                floor_raw = str(row.get('층', ''))
+                direction = str(row.get('방향', '')).strip()
+                floor_display = parse_floor_display(floor_raw)
+                if direction and direction not in ('-', '', 'nan'):
+                    floor_direction = f"{floor_display} / {direction}"
+                else:
+                    floor_direction = floor_display
+
+                real_listings.append({
+                    "dong": rd,
+                    "floor_direction": floor_direction,
+                    "price": price_val,
+                    "note": note_text[:40]
+                })
+
+            # ========== Gate 4: 중복 제거 ==========
             before_dedup = len(real_listings)
             seen = set()
             deduped = []
@@ -988,27 +1013,32 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
             listing_stats["duplicates_removed"] = before_dedup - len(real_listings)
 
             real_listings.sort(key=lambda x: x['price'])
-            real_listings = real_listings[:5]  # 최저가순 5개
+            real_listings = real_listings[:5]
             listing_stats["final_count"] = len(real_listings)
 
     except Exception as e:
         listing_stats["warnings"].append(f"구글 시트 연동 실패: {e}")
         print(f"[ERROR] 경쟁 매물 연동 실패: {e}")
 
-    # [방지 5] 데이터 품질 리포트 출력
-    print(f"\n--- 매물 데이터 품질 리포트 ({complex_name} / {pyeong_name} / {trade_type}) ---")
+    # 데이터 품질 리포트 출력
+    print(f"\n{'='*50}")
+    print(f"  매물 데이터 품질 리포트")
+    print(f"  {complex_name} / {pyeong_name} / {trade_type}")
+    print(f"  유효 동 번호: {sorted(valid_dongs) if valid_dongs else 'Ground Truth 없음'}")
+    print(f"{'='*50}")
     print(f"  구글시트 전체 행 수: {listing_stats['total_rows']}")
     print(f"  조건 매칭 매물 수:   {listing_stats['matched_rows']}")
-    print(f"  삭제/완료 필터링:    {listing_stats['suspicious_filtered']}건 제외")
-    print(f"  가격 파싱 실패:      {listing_stats['price_failed']}건 제외")
-    print(f"  중복 제거:           {listing_stats['duplicates_removed']}건 제거")
+    print(f"  허구 동 차단:        {listing_stats['invalid_dong_filtered']}건")
+    print(f"  삭제/완료 필터링:    {listing_stats['suspicious_filtered']}건")
+    print(f"  가격 이상 필터링:    {listing_stats['price_failed']}건")
+    print(f"  중복 제거:           {listing_stats['duplicates_removed']}건")
     print(f"  최종 표시 매물 수:   {listing_stats['final_count']}건")
     if listing_stats["network_retries"] > 0:
         print(f"  네트워크 재시도:     {listing_stats['network_retries']}회")
     if listing_stats["warnings"]:
         for w in listing_stats["warnings"]:
-            print(f"  [!] 경고: {w}")
-    print(f"--- 리포트 끝 ---\n")
+            print(f"  [!] {w}")
+    print(f"{'='*50}\n")
 
     if not real_listings:
         real_listings = [{"dong": "-", "floor_direction": "-", "price": "-", "note": "현재 해당 조건의 매물이 광고 중이지 않습니다."}]

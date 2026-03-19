@@ -10,6 +10,9 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 
+import generate_proposal
+import importlib
+importlib.reload(generate_proposal)  # 항상 최신 코드 사용 (pyc 캐시 방지)
 from generate_proposal import save_proposal
 
 # 화면 설정 (Wider and Cooler)
