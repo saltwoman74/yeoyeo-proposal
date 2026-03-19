@@ -75,19 +75,19 @@ col_input1, col_input2, col_input3 = st.columns([1, 1, 1])
 
 with col_input1:
     st.markdown("<h3>필수 타겟 정보</h3>", unsafe_allow_html=True)
-    dong_input = st.text_input("아파트 동 (예: 111)", "111")
-    ho_input = st.text_input("아파트 호수 (예: 1904)", "1904")
-    asking_price = st.number_input("매도자 현재 호가 (만원)", min_value=10000, value=98500, step=100)
+    dong_input = st.text_input("아파트 동", "", placeholder="예: 303")
+    ho_input = st.text_input("아파트 호수", "", placeholder="예: 1101")
+    asking_price = st.number_input("매도자 현재 호가 (만원)", min_value=10000, value=10000, step=100)
     owner_status = st.selectbox("현재 점유 상태", ["소유자 거주", "세입자 거주 (전월세)", "공실", "상태 미상"])
 
 with col_input2:
     st.markdown("<h3>협상 특이사항 및 요점</h3>", unsafe_allow_html=True)
     special_notes = st.text_area("현장 방문 결과, 매도자/매수자 특이사항", 
-                                 "집주인 매도 의지 강함. 8월 말 빠른 잔금 조건 시 추가 가격조정 가능성 매우 높음.", height=130)
+                                 "", height=130, placeholder="실제 확인된 사항만 입력")
     
     st.markdown("<h3>참고 관련 정보 (추가)</h3>", unsafe_allow_html=True)
     ref_info = st.text_area("학군, 인테리어 타공 여부, 뷰 스팟 등", 
-                            "거실 뷰 가림 없음. 2년 전 샷시 포함 올수리 완료.", height=100)
+                            "", height=100, placeholder="실제 확인된 사항만 입력")
 
 with col_input3:
     st.markdown("<h3>수동 오버라이드 (우선 적용)</h3>", unsafe_allow_html=True)
@@ -161,16 +161,24 @@ with col_report:
                         html_code = f.read()
 
                     # 2. 강제 Inject (수동 정보 등 융합)
-                    final_market_trend = manual_trade_trend if manual_trade_trend.strip() else "현재 보합세이므로, 적극적인 협상이 필요한 시점입니다."
+                    final_market_trend = manual_trade_trend if manual_trade_trend.strip() else ""
+                    
+                    # 입력된 정보가 있을 때만 인젝션 블록 생성
+                    injection_parts = []
+                    if ref_info.strip():
+                        injection_parts.append(f'<p style="font-size: 13pt;"><strong>핵심 특징 및 참고정보:</strong> {ref_info}</p>')
+                    if special_notes.strip():
+                        injection_parts.append(f'<p style="font-size: 13pt; color: #cc0000;"><strong>협상 요점:</strong> {special_notes}</p>')
+                    injection_parts.append(f'<p><strong>점유 상태:</strong> {owner_status}</p>')
+                    rate_line = f'<strong>반영된 기준금리:</strong> {final_bok_rate}%'
+                    if final_market_trend:
+                        rate_line += f' / <strong>시장 분위기:</strong> {final_market_trend}'
+                    injection_parts.append(f'<p>{rate_line}</p>')
                     
                     injection = f"""
                     <div style="background:#f1f8ff; padding:20px; margin:25px 0; border-radius: 8px; border-left:5px solid #0f3460;">
                         <h3 style="color:#0f3460; margin-top:0; border-bottom:1px solid #ddd; padding-bottom:10px;">YEOYEO 현장 인텔리전스 (Special Note)</h3>
-                        <p style="font-size: 13pt;"><strong>핵심 특징 및 참고정보:</strong> {ref_info}</p>
-                        <p style="font-size: 13pt; color: #cc0000;"><strong>협상 요점:</strong> {special_notes}</p>
-                        <hr style="border-top:1px dashed #ccc; margin:15px 0;">
-                        <p><strong>점유 상태:</strong> {owner_status}</p>
-                        <p><strong>반영된 기준금리:</strong> {final_bok_rate}% / <strong>시장 분위기:</strong> {final_market_trend}</p>
+                        {''.join(injection_parts)}
                     </div>
                     """
                     

@@ -1041,17 +1041,21 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
     print(f"{'='*50}\n")
 
     if not real_listings:
-        real_listings = [{"dong": "-", "floor_direction": "-", "price": "-", "note": "현재 해당 조건의 매물이 광고 중이지 않습니다."}]
-
-    for item in real_listings:
-        price_display = f"{item['price']:,}" if isinstance(item['price'], int) else str(item['price'])
+        # 매칭 데이터 없을 시 — 공란으로 표시 (허구 데이터 절대 생성 안 함)
         doc += f"        <tr>\n"
-        doc += f"            <td>{complex_name}</td>\n"
-        doc += f"            <td>{item['dong']}동</td>\n"
-        doc += f"            <td>{item['floor_direction']}</td>\n"
-        doc += f"            <td>{price_display}</td>\n"
-        doc += f"            <td>{item['note']}</td>\n"
+        doc += f"            <td colspan=\"5\" style=\"text-align:center; color:#999;\">현재 해당 조건의 광고 매물 데이터가 없습니다.</td>\n"
         doc += f"        </tr>\n"
+    else:
+        for item in real_listings:
+            price_display = f"{item['price']:,}" if isinstance(item['price'], int) else str(item['price'])
+            dong_display = f"{item['dong']}동" if item['dong'] and item['dong'] != '-' else ""
+            doc += f"        <tr>\n"
+            doc += f"            <td>{complex_name}</td>\n"
+            doc += f"            <td>{dong_display}</td>\n"
+            doc += f"            <td>{item['floor_direction']}</td>\n"
+            doc += f"            <td>{price_display}</td>\n"
+            doc += f"            <td>{item['note']}</td>\n"
+            doc += f"        </tr>\n"
 
     doc += f"""    </tbody>
 </table>
