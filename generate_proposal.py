@@ -773,7 +773,7 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
             <th>계약일</th>
             <th>거래가격(만원)</th>
             <th>건축물 층수</th>
-            <th>전용면적(㎡)</th>
+            <th>타입/면적(㎡)</th>
         </tr>
     </thead>
     <tbody>
@@ -830,15 +830,47 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
             <td>(대상 물건 본 매물)</td>
         </tr>
 """
-    # 임시 시장 샘플 데이터 (향후 크롤러 연동을 위한 자리 표시자이나, 지시대로 각색 없이 하드코딩된 예시 팩트 형태를 사용)
-    # 실제 시스템에서는 market.csv 등에서 읽어와 반복문으로 출력합니다.
-    sample_listings = [
-        {"dong": "104", "floor": "중", "price": asking_price - 2000 if asking_price else 95000, "note": "시스템에어컨, 기본"},
-        {"dong": "108", "floor": "고", "price": asking_price + 3000 if asking_price else 102000, "note": "올수리, 중문"},
-        {"dong": "114", "floor": "저", "price": asking_price - 4000 if asking_price else 92000, "note": "급매"},
-    ]
+    # 실제 네이버 부동산 광고 매물 (구글 시트 연동)
+    sheet_url = "https://docs.google.com/spreadsheets/d/18wOKWY40CbJECrvDuqit5hOKTqVWxyMCVRI1BJuWu2s/export?format=csv&gid=0"
+    real_listings = []
+    try:
+        import pandas as pd
+        df = pd.read_csv(sheet_url, encoding='utf-8')
+        df = df.fillna('')
+        
+        for idx, row in df.iterrows():
+            rc = str(row.get('단지명', ''))
+            rd = str(row.get('동', '')).replace('동', '')
+            rt = str(row.get('거래종류', ''))
+            ra = str(row.get('평타입', '')).replace('평', '') 
+            
+            # 단지와 거래방식이 일치하고, 평형 숫자가 포함되어 있으면 채택
+            if complex_name.replace('단지','') in rc and trade_type in rt:
+                if str(pyeong_name).replace('평','') in str(row.get('공급', '')) or str(pyeong_name).replace('평','') in ra:
+                    p_str = str(row.get('가격', '')).replace(',', '').replace(' ', '')
+                    price_val = 0
+                    if '억' in p_str:
+                        parts = p_str.split('억')
+                        price_val = int(parts[0]) * 10000 + (int(parts[1]) if parts[1] else 0)
+                    else:
+                        if p_str.isdigit():
+                            price_val = int(p_str)
+                    real_listings.append({
+                        "dong": rd,
+                        "floor": str(row.get('층', '')),
+                        "price": price_val,
+                        "note": str(row.get('매물특징', ''))[:40]
+                    })
+        real_listings.sort(key=lambda x: x['price'])
+        real_listings = real_listings[:5] # 최저가순 5개
+    except Exception as e:
+        print("경쟁 매물 연동 실패:", e)
     
-    for item in sample_listings:
+    if not real_listings:
+        real_listings = [{"dong": "-", "floor": "-", "price": "-", "note": "현재 해당 조건의 매물이 광고 중이지 않습니다."}]
+
+        
+    for item in real_listings:
         doc += f"        <tr>\n"
         doc += f"            <td>{complex_name}</td>\n"
         doc += f"            <td>{item['dong']}동</td>\n"
@@ -1217,8 +1249,8 @@ def get_complex_units(complex_name):
     """단지별 세대수"""
     return {
         '1단지': '1,803',
-        '2단지': '1,420',
-        '3단지': '1,109',
+        '2단지': '1,064',
+        '3단지': '1,465',
         '4단지': '1,768',
     }.get(complex_name, '-')
 
