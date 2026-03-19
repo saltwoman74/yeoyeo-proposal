@@ -184,12 +184,20 @@ with col_report:
                     
                     html_code = html_code.replace("<h2>2. 세대 가치 및 입지 분석</h2>", injection + "<h2>2. 세대 가치 및 입지 분석</h2>")
 
-                    # 3. HTML을 편집 가능하게
+                    # 3. HTML을 편집 가능하게 및 인쇄 전용 버튼 추가
+                    print_injection = """
+                    <style>
+                    @media print { 
+                        .no-print { display: none !important; }
+                    }
+                    </style>
+                    <button class="no-print" contenteditable="false" onclick="window.print()" style="position:fixed; top:20px; right:20px; padding:12px 20px; background-color:#e94560; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold; z-index:10000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">🖨️ 보고서만 인쇄하기</button>
+                    """
                     if "<body>" in html_code:
-                        html_code = html_code.replace("<body>", '<body contenteditable="true">')
+                        html_code = html_code.replace("<body>", f'<body contenteditable="true">\n{print_injection}')
 
                     st.components.v1.html(html_code, height=900, scrolling=True)
-                    st.success("🎉 제안서 생성이 완료되었습니다. 위 화면의 텍스트를 마우스로 직접 클릭하여 워드처럼 편집한 뒤 인쇄(Ctrl+P) 하세요.")
+                    st.success("🎉 제안서 생성이 완료되었습니다. 위 화면의 텍스트를 마우스로 직접 클릭하여 워드처럼 편집한 뒤, 우측 상단의 **[🖨️ 보고서만 인쇄하기]** 버튼을 눌러 인쇄하세요.")
 
                 else:
                     st.error("HTML 제안서가 정상적으로 생성되지 않았습니다.")
