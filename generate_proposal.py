@@ -134,6 +134,39 @@ def get_type_display(unit_type, pyeong_name):
     return f"<strong>{pyeong_name}</strong>"
 
 
+def parse_floor_display(floor_str):
+    """구글시트 층 형식 파싱: '저/42' → '저층', '11/40' → '11층', '고/35' → '고층'"""
+    if not floor_str or str(floor_str).strip() in ('-', '', 'nan'):
+        return '-'
+    floor_str = str(floor_str).strip()
+    if '/' in floor_str:
+        level = floor_str.split('/')[0].strip()
+        if level in ('저', '중', '고'):
+            return f'{level}층'
+        if level.isdigit():
+            return f'{level}층'
+        return f'{level}층'
+    if floor_str.isdigit():
+        return f'{floor_str}층'
+    return floor_str
+
+
+def parse_sheet_price(price_str):
+    """구글시트 가격 파싱: '9억 3,000' → 93000, '7억' → 70000, '68000' → 68000"""
+    if not price_str:
+        return 0
+    p_str = str(price_str).replace(',', '').replace(' ', '').strip()
+    if '억' in p_str:
+        parts = p_str.split('억')
+        eok = int(parts[0]) if parts[0].isdigit() else 0
+        remainder = parts[1] if len(parts) > 1 else ''
+        remainder_val = int(remainder) if remainder.isdigit() else 0
+        return eok * 10000 + remainder_val
+    if p_str.isdigit():
+        return int(p_str)
+    return 0
+
+
 # 관리비 추정 (평형별)
 MGMT_FEE = {
     '25평': 14, '30평': 17, '35평': 21,
@@ -830,52 +863,163 @@ def generate_proposal(dong, ho, trade_type='매매', asking_price=None, comp_pri
             <td>(대상 물건 본 매물)</td>
         </tr>
 """
-    # 실제 네이버 부동산 광고 매물 (구글 시트 연동)
-    sheet_url = "https://docs.google.com/spreadsheets/d/18wOKWY40CbJECrvDuqit5hOKTqVWxyMCVRI1BJuWu2s/export?format=csv&gid=0"
+    # ================================================================
+    # [오류 방지 시스템] 실제 네이버 부동산 광고 매물 (구글 시트 연동)
+    # ================================================================
+    # 방지 대책:
+    #   1. 네트워크 타임아웃 + 재시도 (최대 3회)
+    #   2. 삭제/거래완료 키워드 필터링
+    #   3. 가격 범위 유효성 검증
+    #   4. 동일 매물 중복 제거 (동+가격 기준)
+    #   5. 데이터 품질 리포트 출력
+    # ================================================================
+    SHEET_URL = "https://docs.google.com/spreadsheets/d/18wOKWY40CbJECrvDuqit5hOKTqVWxyMCVRI1BJuWu2s/export?format=csv&gid=0"
+    SUSPICIOUS_KEYWORDS = ['삭제', '거래완료', '계약완료', '광고중지', '거래종결', '해제']
+    MAX_RETRY = 3
+    SHEET_TIMEOUT = 15  # seconds
+
     real_listings = []
+    listing_stats = {
+        "total_rows": 0,
+        "matched_rows": 0,
+        "price_failed": 0,
+        "suspicious_filtered": 0,
+        "duplicates_removed": 0,
+        "network_retries": 0,
+        "final_count": 0,
+        "warnings": [],
+    }
+
     try:
         import pandas as pd
-        df = pd.read_csv(sheet_url, encoding='utf-8')
-        df = df.fillna('')
-        
-        for idx, row in df.iterrows():
-            rc = str(row.get('단지명', ''))
-            rd = str(row.get('동', '')).replace('동', '')
-            rt = str(row.get('거래종류', ''))
-            ra = str(row.get('평타입', '')).replace('평', '') 
-            
-            # 단지와 거래방식이 일치하고, 평형 숫자가 포함되어 있으면 채택
-            if complex_name.replace('단지','') in rc and trade_type in rt:
-                if str(pyeong_name).replace('평','') in str(row.get('공급', '')) or str(pyeong_name).replace('평','') in ra:
-                    p_str = str(row.get('가격', '')).replace(',', '').replace(' ', '')
-                    price_val = 0
-                    if '억' in p_str:
-                        parts = p_str.split('억')
-                        price_val = int(parts[0]) * 10000 + (int(parts[1]) if parts[1] else 0)
-                    else:
-                        if p_str.isdigit():
-                            price_val = int(p_str)
-                    real_listings.append({
-                        "dong": rd,
-                        "floor": str(row.get('층', '')),
-                        "price": price_val,
-                        "note": str(row.get('매물특징', ''))[:40]
-                    })
-        real_listings.sort(key=lambda x: x['price'])
-        real_listings = real_listings[:5] # 최저가순 5개
-    except Exception as e:
-        print("경쟁 매물 연동 실패:", e)
-    
-    if not real_listings:
-        real_listings = [{"dong": "-", "floor": "-", "price": "-", "note": "현재 해당 조건의 매물이 광고 중이지 않습니다."}]
 
-        
+        # [방지 1] 네트워크 재시도 + 타임아웃
+        import io, time
+        try:
+            import requests
+            HAS_REQUESTS = True
+        except ImportError:
+            HAS_REQUESTS = False
+
+        df = None
+        for attempt in range(1, MAX_RETRY + 1):
+            try:
+                if HAS_REQUESTS:
+                    resp = requests.get(SHEET_URL, timeout=SHEET_TIMEOUT)
+                    resp.raise_for_status()
+                    csv_text = resp.content.decode('utf-8')
+                    df = pd.read_csv(io.StringIO(csv_text))
+                else:
+                    df = pd.read_csv(SHEET_URL, encoding='utf-8')
+                break  # 성공 시 즉시 탈출
+            except Exception as net_err:
+                listing_stats["network_retries"] += 1
+                if attempt < MAX_RETRY:
+                    time.sleep(2)
+                    continue
+                else:
+                    raise net_err  # 최종 실패 시 상위 except로
+
+        if df is None or df.empty:
+            listing_stats["warnings"].append("구글 시트 데이터가 비어 있습니다.")
+        else:
+            df = df.fillna('')
+            listing_stats["total_rows"] = len(df)
+
+            for idx, row in df.iterrows():
+                rc = str(row.get('단지명', ''))
+                rd = str(row.get('동', '')).replace('동', '')
+                rt = str(row.get('거래종류', ''))
+                ra = str(row.get('평타입', '')).replace('평', '')
+
+                # 단지와 거래방식이 일치하고, 평형 숫자가 포함되어 있으면 채택
+                if complex_name.replace('단지','') in rc and trade_type in rt:
+                    if str(pyeong_name).replace('평','') in str(row.get('공급', '')) or str(pyeong_name).replace('평','') in ra:
+                        listing_stats["matched_rows"] += 1
+
+                        # [방지 2] 삭제/거래완료 키워드 필터링
+                        note_text = str(row.get('매물특징', ''))
+                        all_text = f"{note_text} {str(row.get('거래종류', ''))} {str(row.get('단지명', ''))}"
+                        is_suspicious = False
+                        for kw in SUSPICIOUS_KEYWORDS:
+                            if kw in all_text:
+                                listing_stats["suspicious_filtered"] += 1
+                                is_suspicious = True
+                                break
+                        if is_suspicious:
+                            continue
+
+                        # [방지 3] 가격 유효성 검증
+                        price_val = parse_sheet_price(row.get('가격', ''))
+                        if price_val <= 0:
+                            listing_stats["price_failed"] += 1
+                            continue
+                        # 비정상 가격 범위 체크 (1억 미만 or 50억 초과는 의심)
+                        if price_val < 10000 or price_val > 500000:
+                            listing_stats["price_failed"] += 1
+                            listing_stats["warnings"].append(f"비정상 가격 필터링: {rd}동 {price_val}만원")
+                            continue
+
+                        floor_raw = str(row.get('층', ''))
+                        direction = str(row.get('방향', '')).strip()
+                        floor_display = parse_floor_display(floor_raw)
+                        if direction and direction not in ('-', '', 'nan'):
+                            floor_direction = f"{floor_display} / {direction}"
+                        else:
+                            floor_direction = floor_display
+
+                        real_listings.append({
+                            "dong": rd,
+                            "floor_direction": floor_direction,
+                            "price": price_val,
+                            "note": note_text[:40]
+                        })
+
+            # [방지 4] 동일 동+가격 기준 중복 제거 (첫 번째만 유지)
+            before_dedup = len(real_listings)
+            seen = set()
+            deduped = []
+            for item in real_listings:
+                key = (item['dong'], item['price'])
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(item)
+            real_listings = deduped
+            listing_stats["duplicates_removed"] = before_dedup - len(real_listings)
+
+            real_listings.sort(key=lambda x: x['price'])
+            real_listings = real_listings[:5]  # 최저가순 5개
+            listing_stats["final_count"] = len(real_listings)
+
+    except Exception as e:
+        listing_stats["warnings"].append(f"구글 시트 연동 실패: {e}")
+        print(f"[ERROR] 경쟁 매물 연동 실패: {e}")
+
+    # [방지 5] 데이터 품질 리포트 출력
+    print(f"\n--- 매물 데이터 품질 리포트 ({complex_name} / {pyeong_name} / {trade_type}) ---")
+    print(f"  구글시트 전체 행 수: {listing_stats['total_rows']}")
+    print(f"  조건 매칭 매물 수:   {listing_stats['matched_rows']}")
+    print(f"  삭제/완료 필터링:    {listing_stats['suspicious_filtered']}건 제외")
+    print(f"  가격 파싱 실패:      {listing_stats['price_failed']}건 제외")
+    print(f"  중복 제거:           {listing_stats['duplicates_removed']}건 제거")
+    print(f"  최종 표시 매물 수:   {listing_stats['final_count']}건")
+    if listing_stats["network_retries"] > 0:
+        print(f"  네트워크 재시도:     {listing_stats['network_retries']}회")
+    if listing_stats["warnings"]:
+        for w in listing_stats["warnings"]:
+            print(f"  [!] 경고: {w}")
+    print(f"--- 리포트 끝 ---\n")
+
+    if not real_listings:
+        real_listings = [{"dong": "-", "floor_direction": "-", "price": "-", "note": "현재 해당 조건의 매물이 광고 중이지 않습니다."}]
+
     for item in real_listings:
+        price_display = f"{item['price']:,}" if isinstance(item['price'], int) else str(item['price'])
         doc += f"        <tr>\n"
         doc += f"            <td>{complex_name}</td>\n"
         doc += f"            <td>{item['dong']}동</td>\n"
-        doc += f"            <td>{item['floor']}층</td>\n"
-        doc += f"            <td>{item['price']:,}</td>\n"
+        doc += f"            <td>{item['floor_direction']}</td>\n"
+        doc += f"            <td>{price_display}</td>\n"
         doc += f"            <td>{item['note']}</td>\n"
         doc += f"        </tr>\n"
 
